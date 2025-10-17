@@ -80,7 +80,35 @@ private:
     bool isPunctuator(char c)
     {
         return c == '(' || c == ')' || c == '{' || c == '}'
-                || c == ';';
+                || c == ';' || c == ',';
+    }
+    
+    // Function to check if a character is a underscore
+    bool isUnderscore(char c)
+    {
+        return c == '_';
+    }
+
+    // Function to skip LineComment
+    void skipLineComment()
+    {
+        while(position < input.length() && input[position] != '\n')
+            position++;
+    }
+
+    // Function to skip BlockComment
+    void skipBlockComment()
+    {
+        while(position+1 < input.length())
+        {
+            if(input[position] == '*' && input[position+1] == '/')
+            {
+                position += 2;
+                return ;
+            }
+            position++;
+        }
+        position = input.length(); // 当最后没有终结*/的时候，到了程序结尾
     }
 
     // Function to get the next word
@@ -88,7 +116,7 @@ private:
     {
         size_t start = position;
         while(position < input.length()
-               && isAlphaNumeric(input[position]))
+               && (isAlphaNumeric(input[position]) || isUnderscore(input[position])))
         {
             position++;
         }
@@ -115,11 +143,12 @@ private:
         {
             two = input.substr(start, 2);
             if(two == "==" || two == "!=" || two == "<="
-               || two == ">=" || two == "&&" || two == "||")
-               {
+               || two == ">=" || two == "&&" || two == "||"
+               || two == "//" || two == "/*")
+            {
                 position += 2;
                 return two;
-               }
+            }
         }
         position++;
         return input.substr(start, 1);
@@ -157,8 +186,8 @@ public:
                 continue;
             }
 
-            // Identify keywords or identifiers
-            if(isAlpha(currentChar))
+            // Identify keywords or identifiers 还有下划线开头
+            if(isAlpha(currentChar) || isUnderscore(currentChar))
             {
                 string word = getNextWord();
                 if(keywords.find(word) != keywords.end()) //identify keywords
@@ -177,8 +206,13 @@ public:
             }
             else if(isOperator(currentChar))
             {
-                string op = getNextOperator();
-                tokens.emplace_back(TokenType::OPERATOR, op);
+                string op = getNextOperator(); //可能返回运算符，也可能是注释符号
+                if(op == "//")
+                    skipLineComment();
+                else if(op == "/*")
+                    skipLineComment();
+                else 
+                    tokens.emplace_back(TokenType::OPERATOR, op);
             }
             else if(isPunctuator(currentChar))
             {
