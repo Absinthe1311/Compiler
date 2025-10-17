@@ -1,29 +1,16 @@
-int a = 1;
-int b = 2;
-
-int f(int x, int y) {
-    int z = x + y * (a - b) / 2 % 3;
-    if (z < 10 && z > 0 || z <= 20 && z >= 5 || z == 7 || z != 8) {
-        z = z + 1;
+/* 开头一个块注释，包含各种符号和单词，测试块注释跳过 */
+int/* and some tricky symbols : ( ) { } ; */ factorial (int n) {
+    int result = 1; /* with multi-line comment
+                        that contains stars * and slashes / and words */
+    // 一个行注释，包含运算符和关键字 if x <= 0 { return 1; }
+    if (n <= 0) { 
+        return 1; 
     } else {
-        z = z - 1;
+        /* 注释里包含类似注释起始符号的文本 "/* not real start" */
+        while (n > 1) {
+            result = result * n; /* multiply */
+            n = n - 1; // decrement n
+        }
+        return result;
     }
-    while (z < 100) {
-        z = z + 1;
-        if (z == 50) break;
-        continue;
-    }
-    return z;
-}
-
-void g() {
-    int i = 0;
-    i = f(i, a);
-}
-
-int main() {
-    int result = 0;
-    result = f(1, 2);
-    g();
-    return result;
 }

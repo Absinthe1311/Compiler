@@ -210,7 +210,7 @@ public:
                 if(op == "//")
                     skipLineComment();
                 else if(op == "/*")
-                    skipLineComment();
+                    skipBlockComment();
                 else 
                     tokens.emplace_back(TokenType::OPERATOR, op);
             }
