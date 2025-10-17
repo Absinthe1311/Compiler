@@ -92,13 +92,19 @@ private:
     // Function to skip LineComment
     void skipLineComment()
     {
+        if(position +1 < input.length() && input[position] == '/' && input[position+1] == '/')
+            position += 2;
         while(position < input.length() && input[position] != '\n')
+            position++;
+        if(position < input.length() && input[position] == '\n')
             position++;
     }
 
     // Function to skip BlockComment
     void skipBlockComment()
     {
+        if(position+1 < input.length() && input[position] == '/' && input[position+1] == '*')
+            position += 2;
         while(position+1 < input.length())
         {
             if(input[position] == '*' && input[position+1] == '/')
@@ -144,7 +150,7 @@ private:
             two = input.substr(start, 2);
             if(two == "==" || two == "!=" || two == "<="
                || two == ">=" || two == "&&" || two == "||"
-               || two == "//" || two == "/*")
+              )
             {
                 position += 2;
                 return two;
@@ -204,15 +210,28 @@ public:
                 string number = getNextNumber();
                 tokens.emplace_back(TokenType::INTEGER_LITERAL, number);
             }
+            else if(currentChar == '/') //遇到/的时候判断是注释还是运算符
+            {
+                if(position+1 < input.length() && input[position+1] == '/')
+                {
+                    skipLineComment();
+                    continue;
+                }
+                else if(position + 1 < input.length() && input[position+1] == '*')
+                {
+                    skipBlockComment();
+                    continue;
+                }
+                else
+                {
+                    string op = getNextOperator();
+                    tokens.emplace_back(TokenType::OPERATOR,op);
+                }
+            }
             else if(isOperator(currentChar))
             {
-                string op = getNextOperator(); //可能返回运算符，也可能是注释符号
-                if(op == "//")
-                    skipLineComment();
-                else if(op == "/*")
-                    skipBlockComment();
-                else 
-                    tokens.emplace_back(TokenType::OPERATOR, op);
+                string op = getNextOperator(); 
+                tokens.emplace_back(TokenType::OPERATOR, op);
             }
             else if(isPunctuator(currentChar))
             {
