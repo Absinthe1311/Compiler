@@ -1,13 +1,7 @@
-# 创建可执行文件
+# Experiment1/CMakeLists.txt
 add_executable(SyntaxAnalyzer SyntaxAnalyzer.cpp)
 
-# 设置目标属性
-target_compile_features(SyntaxAnalyzer PRIVATE cxx_std_17)
-
-# 编译选项
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_options(SyntaxAnalyzer PRIVATE -g -O0 -Wall -Wextra)
-else()
-    target_compile_options(SyntaxAnalyzer PRIVATE -O2)
-endif()
-
+# 可执行文件直接输出到 CMAKE_BINARY_DIR（构建根目录）
+set_target_properties(SyntaxAnalyzer PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+)
