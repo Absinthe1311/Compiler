@@ -73,15 +73,15 @@ Experiment2/CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o: Experiment2/CMak
 Experiment2/CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o: ../Experiment2/SyntaxAnalyzer.cpp
 Experiment2/CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o: Experiment2/CMakeFiles/SyntaxAnalyzer.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/absinthe/Compiler/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object Experiment2/CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o"
-	cd /home/absinthe/Compiler/build/Experiment2 && /usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT Experiment2/CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o -MF CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o.d -o CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o -c /home/absinthe/Compiler/Experiment2/SyntaxAnalyzer.cpp
+	cd /home/absinthe/Compiler/build/Experiment2 && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT Experiment2/CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o -MF CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o.d -o CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o -c /home/absinthe/Compiler/Experiment2/SyntaxAnalyzer.cpp
 
 Experiment2/CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.i"
-	cd /home/absinthe/Compiler/build/Experiment2 && /usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/absinthe/Compiler/Experiment2/SyntaxAnalyzer.cpp > CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.i
+	cd /home/absinthe/Compiler/build/Experiment2 && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/absinthe/Compiler/Experiment2/SyntaxAnalyzer.cpp > CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.i
 
 Experiment2/CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.s"
-	cd /home/absinthe/Compiler/build/Experiment2 && /usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/absinthe/Compiler/Experiment2/SyntaxAnalyzer.cpp -o CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.s
+	cd /home/absinthe/Compiler/build/Experiment2 && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/absinthe/Compiler/Experiment2/SyntaxAnalyzer.cpp -o CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.s
 
 # Object files for target SyntaxAnalyzer
 SyntaxAnalyzer_OBJECTS = \

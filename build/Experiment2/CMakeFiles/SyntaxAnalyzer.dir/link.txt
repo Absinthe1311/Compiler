@@ -1,1 +1,1 @@
-/usr/bin/clang++ -g CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o -o ../bin/SyntaxAnalyzer 
+/usr/bin/c++ CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o -o ../bin/SyntaxAnalyzer 

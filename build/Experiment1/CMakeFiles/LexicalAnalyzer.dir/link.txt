@@ -1,1 +1,0 @@
-/usr/bin/clang++ -g CMakeFiles/LexicalAnalyzer.dir/LexicalAnalyzer.cpp.o -o ../LexicalAnalyzer 
