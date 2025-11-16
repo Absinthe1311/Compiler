@@ -72,8 +72,8 @@ private:
         return isAlpha(c) || isDigit(c);
     }
 
-    // Function to check if a character is a operator
-    bool isOperator(char c)
+    // Function to check if a character is a OPERATOR
+    bool isOPERATOR(char c)
     {
         return c == '+' || c == '-' || c == '*' || c == '/' || c == '%'
                 || c == '=' || c == '<' || c == '>' || c == '!'
@@ -150,8 +150,8 @@ private:
         return input.substr(start, position - start);
     }
 
-    // Function to get the next operator
-    string getNextOperator()
+    // Function to get the next OPERATOR
+    string getNextOPERATOR()
     {
         size_t start = position;
         string two;
@@ -237,13 +237,13 @@ public:
                 }
                 else
                 {
-                    string op = getNextOperator();
+                    string op = getNextOPERATOR();
                     tokens.emplace_back(TokenType::OPERATOR,op, currentLine);
                 }
             }
-            else if(isOperator(currentChar))
+            else if(isOPERATOR(currentChar))
             {
-                string op = getNextOperator(); 
+                string op = getNextOPERATOR(); 
                 tokens.emplace_back(TokenType::OPERATOR, op, currentLine);
             }
             else if(isPunctuator(currentChar))
@@ -270,7 +270,7 @@ string getKeyWordName(const Token& token)
 }
 
 
-string getOperatorName(const Token& token)
+string getOPERATORName(const Token& token)
 {
     return string("'") + token.value + "'";
 }
@@ -292,7 +292,7 @@ string getTokenTypeName(TokenType type, const Token& token)
         case TokenType::INTEGER_LITERAL:
             return "IntConst";
         case TokenType::OPERATOR:
-            return getOperatorName(token);
+            return getOPERATORName(token);
         case TokenType::PUNCTUATOR:
             return getPunctuatorName(token);
         case TokenType::UNKNOWN:
@@ -321,7 +321,6 @@ class SyntaxAnalyzer{
 private:
     vector<Token> tokens; 
     int pos; // 当前的位置
-    int loopDepth;
     set<int> errorLines;
 
     Token getCurrentToken() {
@@ -364,11 +363,11 @@ private:
 
     void sync() {
         while(getCurrentToken().type != TokenType::END_OF_FILE &&
-            !(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ";")&&
-            !(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "}")) {
+            !(match(TokenType::PUNCTUATOR, ";"))&&
+            !(match(TokenType::PUNCTUATOR,"}"))) {
                 advance();
             }
-            if(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ";")
+            if(match(TokenType::PUNCTUATOR, ";"))
                 advance();
     }
 
@@ -383,7 +382,7 @@ private:
         if (!match(TokenType::KEYWORD, "int") && !match(TokenType::KEYWORD, "void")) {
             error();
             sync();
-            if(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "}")
+            if(match(TokenType::PUNCTUATOR,"}"))
                 advance();
             return;
         }
@@ -391,7 +390,7 @@ private:
 
         if(!consume(TokenType::IDENTIFIER)) {
             sync();
-            if(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "}")
+            if(match(TokenType::PUNCTUATOR,"}"))
                 advance();
             return;
         }
@@ -400,7 +399,7 @@ private:
 
         if(match(TokenType::KEYWORD, "int")) {
             parseParam();
-            while(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ",") {
+            while(match(TokenType::PUNCTUATOR,",")) {
                 advance();
                 parseParam();
             }
@@ -421,8 +420,7 @@ private:
         if (!consume(TokenType::PUNCTUATOR, "{")) {
             return;
         }
-
-        while (!(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "}") &&
+        while (!match(TokenType::PUNCTUATOR,"}") &&
                 getCurrentToken().type != TokenType::END_OF_FILE){
                     parseStmt();
                 }
@@ -441,14 +439,15 @@ private:
         if(match(TokenType::KEYWORD, "int")) {
             advance();
             consume(TokenType::IDENTIFIER);
-            if(getCurrentToken().type == TokenType::OPERATOR && getCurrentToken().value == "=") {
+            if(match(TokenType::OPERATOR,"="))
+            {
                 advance();
                 parseExpr();
             }
-            while(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ",") {
+            while(match(TokenType::PUNCTUATOR,",")) {
                 advance();
                 consume(TokenType::IDENTIFIER);
-                if(getCurrentToken().type == TokenType::OPERATOR && getCurrentToken().value == "=") {
+                if(match(TokenType::OPERATOR,"=")) {
                     advance();
                     parseExpr();
                 }
@@ -469,9 +468,7 @@ private:
             consume(TokenType::PUNCTUATOR, "(");
             parseExpr();
             consume(TokenType::PUNCTUATOR, ")");
-            loopDepth++;
             parseStmt();
-            loopDepth--;
         } else if(match(TokenType::KEYWORD, "break")) {
             advance();
             consume(TokenType::PUNCTUATOR, ";");
@@ -480,23 +477,23 @@ private:
             consume(TokenType::PUNCTUATOR, ";");
         } else if( match(TokenType::KEYWORD, "return")) {
             advance();
-            if(!(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ";")) {
+            if(!(match(TokenType::PUNCTUATOR, ";"))) {
                 parseExpr();
             }
             consume(TokenType::PUNCTUATOR, ";");
-        } else if (getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "{") {
+        } else if (match(TokenType::PUNCTUATOR, ";") ){
             parseBlock();
         } else if(getCurrentToken().type == TokenType::IDENTIFIER) {
             advance();
-            if(getCurrentToken().type == TokenType::OPERATOR && getCurrentToken().value == "=") {
+            if(match(TokenType::OPERATOR,"=")) {
                 advance();
                 parseExpr();
                 consume(TokenType::PUNCTUATOR, ";");
-            } else if(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "(") {
+            } else if(match(TokenType::PUNCTUATOR,"(")) {
                 advance();
-                if(! (getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ")")) {
+                if(! (match(TokenType::PUNCTUATOR,")"))) {
                     parseExpr();
-                    while( getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ","){
+                    while( match(TokenType::PUNCTUATOR,",")){
                         advance();
                         parseExpr();
                     }
@@ -506,7 +503,7 @@ private:
             } else {
                 consume(TokenType::PUNCTUATOR, ";");
             }
-        } else if(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ";") {
+        } else if(match(TokenType::PUNCTUATOR, ";")) {
             advance();
         } else {
             error();
@@ -520,7 +517,7 @@ private:
 
     void parseLOrExpr() {
         parseLAndExpr();
-        while(getCurrentToken().type == TokenType::OPERATOR && getCurrentToken().value == "||"){
+        while(match(TokenType::OPERATOR, "||")){
             advance();
             parseLAndExpr();
         }
@@ -564,8 +561,8 @@ private:
     }
 
     void parseUnaryExpr() {
-        if (getCurrentToken().type == TokenType::OPERATOR && 
-            (getCurrentToken().value == "+" || getCurrentToken().value == "-" || getCurrentToken().value == "!")) {
+        if(match(TokenType::OPERATOR, "+") || match(TokenType::OPERATOR, "-") || match(TokenType::OPERATOR, "!"))
+        {
             advance();
             parseUnaryExpr();
         } else {
@@ -574,36 +571,44 @@ private:
     }
 
     void parsePrimaryExpr() {
-        if (getCurrentToken().type == TokenType::IDENTIFIER) {
+        if(match(TokenType::IDENTIFIER))
+        {
             advance();
-            if (getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "(") {
+            if(match(TokenType::PUNCTUATOR, "("))
+            {
                 advance();
-                if (!(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ")")) {
+                if(!match(TokenType::PUNCTUATOR, ")")){
                     parseExpr();
-                    while (getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ",") {
+                    while(match(TokenType::PUNCTUATOR, ","))
+                    {
                         advance();
                         parseExpr();
                     }
                 }
                 consume(TokenType::PUNCTUATOR, ")");
             }
-        } else if (getCurrentToken().type == TokenType::INTEGER_LITERAL) {
+        }
+        else if(match(TokenType::INTEGER_LITERAL))
+        {
             advance();
-        } else if (getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "(") {
+        }
+        else if (match(TokenType::PUNCTUATOR, "("))
+        {
             advance();
             parseExpr();
             consume(TokenType::PUNCTUATOR, ")");
-        } else {
+        }
+        else 
+        {
             error();
-            if (getCurrentToken().type != TokenType::END_OF_FILE && 
-                !(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ";")) {
+            if(!match(TokenType::END_OF_FILE) && !match(TokenType::PUNCTUATOR, ";")) {
                 advance();
             }
         }
     }
 
 public:
-    SyntaxAnalyzer(const vector<Token>&toks): tokens(toks), pos(0), loopDepth(0) {}
+    SyntaxAnalyzer(const vector<Token>&toks): tokens(toks), pos(0) {}
 
     bool parse() {
         parseCompUnit();
