@@ -101,8 +101,10 @@ private:
         while(position < input.length() && input[position] != '\n')
             position++;
         if(position < input.length() && input[position] == '\n')
-        {    position++;
-            currentLine++;}
+        {   
+            position++;
+            currentLine++;
+        }
     }
 
     // Function to skip BlockComment
@@ -112,13 +114,13 @@ private:
             position += 2;
         while(position+1 < input.length())
         {
-            if(input[position] == '\n')
-                currentLine++;
             if(input[position] == '*' && input[position+1] == '/')
             {
                 position += 2;
                 return ;
             }
+            if(input[position] == '\n')
+                currentLine++;
             position++;
         }
         position = input.length(); // 当最后没有终结*/的时候，到了程序结尾
@@ -196,6 +198,8 @@ public:
             // Skip whitespace
             if(isWhitespace(currentChar))
             {
+                if(currentChar == '\n')
+                    currentLine++;
                 position++;
                 continue;
             }
@@ -435,6 +439,7 @@ private:
                 advance();
                 parseExpr();
             }
+
             while(match(TokenType::PUNCTUATOR,",")) {
                 advance();
                 consume(TokenType::IDENTIFIER);
@@ -444,6 +449,7 @@ private:
                 }
             }
             consume(TokenType::PUNCTUATOR, ";");
+
         } else if(match(TokenType::KEYWORD, "if")) {
             advance();
             consume(TokenType::PUNCTUATOR, "(");
@@ -454,25 +460,30 @@ private:
                 advance();
                 parseStmt();
             }
+
         } else if(match(TokenType::KEYWORD, "while")) {
             advance();
             consume(TokenType::PUNCTUATOR, "(");
             parseExpr();
             consume(TokenType::PUNCTUATOR, ")");
             parseStmt();
+
         } else if(match(TokenType::KEYWORD, "break")) {
             advance();
             consume(TokenType::PUNCTUATOR, ";");
+
         } else if (match(TokenType::KEYWORD, "continue")) {
             advance();
             consume(TokenType::PUNCTUATOR, ";");
+
         } else if( match(TokenType::KEYWORD, "return")) {
             advance();
             if(!(match(TokenType::PUNCTUATOR, ";"))) {
                 parseExpr();
             }
             consume(TokenType::PUNCTUATOR, ";");
-        } else if (match(TokenType::PUNCTUATOR, ";") ){
+
+        } else if (match(TokenType::PUNCTUATOR, "{") ){
             parseBlock();
         } else if(getCurrentToken().type == TokenType::IDENTIFIER) {
             advance();
@@ -621,7 +632,7 @@ int main()
     vector<Token> tokens = lexer.tokenize();
 
     SyntaxAnalyzer parser(tokens);
-    // parser.parse();
+    parser.parse();
     set<int> Errors = parser.getErrors();
 
     if(Errors.empty()){
