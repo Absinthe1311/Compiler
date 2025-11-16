@@ -8,7 +8,8 @@ enum class TokenType {
     INTEGER_LITERAL,
     OPERATOR,
     PUNCTUATOR,
-    UNKNOWN
+    UNKNOWN,
+    END_OF_FILE
 };
 
 // Struct to represent a token with its type and value
@@ -257,6 +258,7 @@ public:
             }
         }
 
+        tokens.emplace_back(TokenType::END_OF_FILE, "", currentLine);
         return tokens;
     }
 };
@@ -312,118 +314,120 @@ void printTokens(const vector<Token>& tokens)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
 
-// 语法分析器类
-class SyntaxAnalyzer {
+class SyntaxAnalyzer{
 private:
-    vector<Token> tokens;
-    size_t current;
+    vector<Token> tokens; 
+    int pos; // 当前的位置
+    int loopDepth;
     set<int> errorLines;
-    vector<string> errorMessages;
 
-    // 获取当前token
     Token getCurrentToken() {
-        if (current < tokens.size())
-            return tokens[current];
-        return Token(TokenType::UNKNOWN, "", -1);
+        if(pos >= tokens.size()) return tokens.back();
+        return tokens[pos];
     }
 
-    // 移动到下一个token
     void advance() {
-        if (current < tokens.size())
-            current++;
+        if (pos < tokens.size()) pos ++;
     }
 
-    // 检查当前token是否匹配期望的值
+    void error() {
+        int line = getCurrentToken().line;
+        errorLines.insert(line);
+    }
+
     bool match(TokenType type, const string& value = "") {
-        Token token = getCurrentToken();
-        if (token.type != type)
-            return false;
-        if (!value.empty() && token.value != value)
-            return false;
+        if(getCurrentToken().type != type) return false;
+        if(!value.empty() && getCurrentToken().value != value) return false;
         return true;
     }
 
-    // 期望一个特定的token，如果不匹配则报错
-    bool expect(TokenType type, const string& value = "") {
-        if (match(type, value)) {
+    bool consume(TokenType type, const string&value) {
+        if(match(type, value)) {
             advance();
             return true;
         }
-        Token token = getCurrentToken();
-        errorLines.insert(token.line);
-        string msg = "Line" + to_string(token.line) + ": Expected ";
-        if(!value.empty())
-            msg += "'" + value + "'";
-        else 
-            msg += "token type";
-        msg += " but got '"  + token.value + "'";
-        errorMessages.push_back(msg);
+        error();
         return false;
     }
 
-    void reportError(const string& msg) {
-        Token token = getCurrentToken();
-        errorLines.insert(token.line);
-        errorMessages.push_back("Line " + to_string(token.line) + ": " + msg);
+    bool consume(TokenType type) {
+        if(getCurrentToken().type == type) {
+            advance();
+            return true;
+        }
+        error();
+        return false;
     }
 
+    void sync() {
+        while(getCurrentToken().type != TokenType::END_OF_FILE &&
+            !(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ";")&&
+            !(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "}")) {
+                advance();
+            }
+            if(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ";")
+                advance();
+    }
 
-    // 语法规则：CompUnit -> {FuncDef}
-    bool parseCompUnit() {
-        while (current < tokens.size()) {
+    void parseCompUnit() {
+        while (getCurrentToken().type != TokenType::END_OF_FILE) {
             parseFuncDef();
         }
-        return errorLines.empty();
     }
 
-    // FuncDef → (“int” | “void”) ID “(” (Param (“,” Param)*)? “)” Block
-    bool parseFuncDef()
-    {
-        if(!match(TokenType::KEYWORD, "int") && !match(TokenType::KEYWORD, "void")){
-            reportError("Expected function return type(int or void)");
-            return false;
+    // 函数定义 FuncDef → (“int” | “void”) ID “(” (Param (“,” Param)*)? “)” Block
+    void parseFuncDef() {
+        if (!match(TokenType::KEYWORD, "int") && !match(TokenType::KEYWORD, "void")) {
+            error();
+            sync();
+            if(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "}")
+                advance();
+            return;
         }
-        
         advance();
 
-        if(!expect(TokenType::IDENTIFIER))
-            return false;
-
-        if(!expect(TokenType::PUNCTUATOR, "("))
-            return false;
-
-        if(!match(TokenType::PUNCTUATOR, ")")) 
-        {
-            if(!parseParam())
-                return false;
-            
-            while(match(TokenType::PUNCTUATOR, ","))
-            {
+        if(!consume(TokenType::IDENTIFIER)) {
+            sync();
+            if(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "}")
                 advance();
+            return;
+        }
 
-                if(!parseParam())
-                    return false;
+        consume(TokenType::PUNCTUATOR, "(");
+
+        if(match(TokenType::KEYWORD, "int")) {
+            parseParam();
+            while(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ",") {
+                advance();
+                parseParam();
             }
         }
 
-        if(!expect(TokenType::PUNCTUATOR, ")"))
-            return false;
-        
-        return parseBlock();
+        consume(TokenType::PUNCTUATOR, ")");
+        parseBlock();
     }
 
-    // Block → “{” Stmt* “}”
-    bool parseBlock()
-    {
-        if(!expect(TokenType::PUNCTUATOR, "{"))
-            return false;
-        
-        while(!match(TokenType::PUNCTUATOR, "}") && current < tokens.size()){
-            parseStmt();
+    // 形参 Param → “int” ID
+    void parseParam(){
+        consume(TokenType::KEYWORD, "int");
+        consume(TokenType::IDENTIFIER);
+    }
+
+    // 语句块 Block → “{” Stmt* “}”
+    void parseBlock() {
+        if (!consume(TokenType::PUNCTUATOR, "{")) {
+            return;
         }
 
-        return expect(TokenType::PUNCTUATOR, "}");
+        while (!(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "}") &&
+                getCurrentToken().type != TokenType::END_OF_FILE){
+                    parseStmt();
+                }
+
+        consume(TokenType::PUNCTUATOR, "}");
     }
 
     /*
@@ -433,357 +437,204 @@ private:
            | “while” “(” Expr “)” Stmt
            | “break” “;” | “continue” “;” | “return” Expr “;”
     */
-   bool parseStmt()
-   {
-    if(match(TokenType::PUNCTUATOR, "{"))
-        return parseBlock();
-
-    if(match(TokenType::PUNCTUATOR, ";"))
-    {
-        advance();
-        return true;
-    }
-
-    if(match(TokenType::KEYWORD, "int"))
-    {
-        advance();
-
-        if(!expect(TokenType::IDENTIFIER))
-            return false;
-
-        if(!expect(TokenType::OPERATOR, "="))
-            return false;
-        
-        if(!parseExpr())
-            return false;
-
-        return expect(TokenType::PUNCTUATOR, ";");
-    }
-
-    size_t savedPos = current;
-
-    if(match(TokenType::IDENTIFIER))
-    {
-        advance();
-
-        if(match(TokenType::OPERATOR, "="))
-        {
+    void parseStmt() {
+        if(match(TokenType::KEYWORD, "int")) {
             advance();
-            if(!parseExpr())
-                return false;
-            return expect(TokenType::PUNCTUATOR, ";");
-        }
-
-        current = savedPos;
-        if(!parseExpr())
-            return false;
-
-        return expect(TokenType::PUNCTUATOR, ";");
-    }
-
-    if(match(TokenType::KEYWORD, "if"))
-    {
-        advance();
-
-        if(!expect(TokenType::PUNCTUATOR, "("))
-            return false;
-        
-        if(!parseExpr())
-            return false;
-
-        if(!expect(TokenType::PUNCTUATOR, ")"))
-            return false;
-
-        if(!parseStmt())
-            return false;
-        
-        if(match(TokenType::KEYWORD, "else"))
-        {
-            advance();
-
-            if(!parseStmt())
-                return false;
-        }
-
-        return true;
-    }
-
-    if(match(TokenType::KEYWORD, "while"))
-    {
-        advance();
-
-        if(!expect(TokenType::PUNCTUATOR, "("))
-            return false;
-
-        if(!parseExpr())
-            return false;
-
-        if(!expect(TokenType::PUNCTUATOR, ")"))
-            return false;
-
-        return parseStmt();
-    }
-
-    if(match(TokenType::KEYWORD, "break"))
-    {
-        advance();
-
-        if(!expect(TokenType::PUNCTUATOR, ";"))
-            return false;
-        return true;
-    }
-
-    if(match(TokenType::KEYWORD, "continue"))
-    {
-        advance();
-
-        if(!expect(TokenType::PUNCTUATOR, ";"))
-            return false;
-
-        return true;
-    }
-
-    if(match(TokenType::KEYWORD, "return"))
-    {
-        advance();
-
-        if(!parseExpr())
-            return false;
-
-        if(!expect(TokenType::PUNCTUATOR, ";"))
-            return false;
-
-        return true;
-    }
-
-    if(!parseExpr())
-        return false;
-
-    return expect(TokenType::PUNCTUATOR, ";");
-   }
-
-    //  Param → “int” ID
-    bool parseParam()
-    {
-        if(!expect(TokenType::KEYWORD, "int"))
-            return false;
-
-        if(!expect(TokenType::IDENTIFIER))
-            return false;
-
-        return true;
-    }
-
-    // Expr → LOrExpr
-    bool parseExpr()
-    {
-        return parseLOrExpr();
-    }
-
-    // LOrExpr → LAndExpr | LOrExpr “||” LAndExpr
-    // LOReXPR -> LAndExpr ("||" LAndExpr)*
-    bool parseLOrExpr()
-    {
-        if(!parseLAndExpr())
-            return false;
-
-        while(match(TokenType::OPERATOR, "||"))
-        {
-            advance();
-
-            if(!parseLAndExpr())
-                return false;
-        }
-
-        return true;
-    }
-
-    //  LAndExpr → RelExpr | LAndExpr “&&” RelExpr
-    //  LAndExpr -> RelExpr ("&&" RelExpr)*
-    bool parseLAndExpr()
-    {
-        if(!parseRelExpr())
-            return false;
-
-        while(match(TokenType::OPERATOR, "&&"))
-        {
-            if(!parseRelExpr())
-                return false;
-        }
-        
-        return true;
-    }
-
-    // RelExpr → AddExpr | RelExpr (“<” | “>” | “<=” | “>=” | “==” | “!=”) AddExpr
-    // RelExpr -> AddExpr (("<" | ">" | "<=" | ">=" | "==" | "!=") AddExpr)*
-    bool parseRelExpr()
-    {
-        if(!parseAddExpr())
-            return false;
-        
-        while (match(TokenType::OPERATOR, "<") || match(TokenType::OPERATOR, ">") ||
-               match(TokenType::OPERATOR, "<=") || match(TokenType::OPERATOR, ">=") ||
-               match(TokenType::OPERATOR, "==") || match(TokenType::OPERATOR, "!="))
-        {
-            advance();
-            if (!parseAddExpr())
-                return false;
-        }
-        return true;
-    }
-
-    //AddExpr → MulExpr | AddExpr (“+” | “-”) MulExpr
-    //AddExpr -> MulExpr (("+" | "-") MulExpr)*
-    bool parseAddExpr()
-    {
-        if(!parseMulExpr())
-            return false;
-
-        while(match(TokenType::OPERATOR, "+") || match(TokenType::OPERATOR, "-"))
-        {
-            advance();
-
-            if(!parseMulExpr())
-                return false;
-        }
-
-        return true;
-    }
-
-    // MulExpr → UnaryExpr | MulExpr (“*” | “/” | “%”) UnaryExpr
-    // MulExpr -> UnaryExpr (("*" | "/" | "%") UnaryExpr)*
-    bool parseMulExpr()
-    {
-        if(!parseUnaryExpr())
-            return false;
-        
-        while(match(TokenType::OPERATOR, "*") || match(TokenType::OPERATOR, "/") || match(TokenType::OPERATOR, "%"))
-        {
-            advance();
-            if(!parseUnaryExpr())
-                return false;
-        }
-
-        return true;
-    }
-
-    // UnaryExpr → PrimaryExpr | (“+” | “-” | “!”) UnaryExpr
-    bool parseUnaryExpr()
-    {
-        if(match(TokenType::OPERATOR, "+") || match(TokenType::OPERATOR, "-") || match(TokenType::OPERATOR, "!"))
-        {
-            advance();
-
-            return parseUnaryExpr();
-        }
-
-        return parsePrimaryExpr();
-    }
-
-    // PrimaryExpr → ID | NUMBER | “(” Expr “)” | ID “(” (Expr (“,” Expr)*)? “)”
-    bool parsePrimaryExpr()
-    {
-        if(match(TokenType::IDENTIFIER))
-        {
-            advance();
-
-            if(match(TokenType::PUNCTUATOR, "(")) {
+            consume(TokenType::IDENTIFIER);
+            if(getCurrentToken().type == TokenType::OPERATOR && getCurrentToken().value == "=") {
                 advance();
-
-                if(!match(TokenType::PUNCTUATOR, ")"))
-                {
-                    if(!parseExpr())
-                        return false;
-
-                    while(match(TokenType::PUNCTUATOR, ","))
-                    {
+                parseExpr();
+            }
+            while(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ",") {
+                advance();
+                consume(TokenType::IDENTIFIER);
+                if(getCurrentToken().type == TokenType::OPERATOR && getCurrentToken().value == "=") {
+                    advance();
+                    parseExpr();
+                }
+            }
+            consume(TokenType::PUNCTUATOR, ";");
+        } else if(match(TokenType::KEYWORD, "if")) {
+            advance();
+            consume(TokenType::PUNCTUATOR, "(");
+            parseExpr();
+            consume(TokenType::PUNCTUATOR, ")");
+            parseStmt();
+            if(match(TokenType::KEYWORD, "else")) {
+                advance();
+                parseStmt();
+            }
+        } else if(match(TokenType::KEYWORD, "while")) {
+            advance();
+            consume(TokenType::PUNCTUATOR, "(");
+            parseExpr();
+            consume(TokenType::PUNCTUATOR, ")");
+            loopDepth++;
+            parseStmt();
+            loopDepth--;
+        } else if(match(TokenType::KEYWORD, "break")) {
+            advance();
+            consume(TokenType::PUNCTUATOR, ";");
+        } else if (match(TokenType::KEYWORD, "continue")) {
+            advance();
+            consume(TokenType::PUNCTUATOR, ";");
+        } else if( match(TokenType::KEYWORD, "return")) {
+            advance();
+            if(!(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ";")) {
+                parseExpr();
+            }
+            consume(TokenType::PUNCTUATOR, ";");
+        } else if (getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "{") {
+            parseBlock();
+        } else if(getCurrentToken().type == TokenType::IDENTIFIER) {
+            advance();
+            if(getCurrentToken().type == TokenType::OPERATOR && getCurrentToken().value == "=") {
+                advance();
+                parseExpr();
+                consume(TokenType::PUNCTUATOR, ";");
+            } else if(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "(") {
+                advance();
+                if(! (getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ")")) {
+                    parseExpr();
+                    while( getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ","){
                         advance();
-                        if(!parseExpr())
-                            return false;
+                        parseExpr();
                     }
                 }
-                return expect(TokenType::PUNCTUATOR, ";");
+                consume(TokenType::PUNCTUATOR, ")");
+                consume(TokenType::PUNCTUATOR, ";");
+            } else {
+                consume(TokenType::PUNCTUATOR, ";");
             }
-            return true;
+        } else if(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ";") {
+            advance();
+        } else {
+            error();
+            advance();
         }
+    }
 
-        if(match(TokenType::INTEGER_LITERAL))
+    void parseExpr() {
+        parseLOrExpr();
+    }
+
+    void parseLOrExpr() {
+        parseLAndExpr();
+        while(getCurrentToken().type == TokenType::OPERATOR && getCurrentToken().value == "||"){
+            advance();
+            parseLAndExpr();
+        }
+    }
+
+    void parseLAndExpr() {
+        parseRelExpr();
+        while( getCurrentToken().type == TokenType::OPERATOR && getCurrentToken().value == "&&") 
         {
             advance();
-            return true;
+            parseRelExpr();
         }
+    }
 
-        if(match(TokenType::PUNCTUATOR, "("))
+    void parseRelExpr() {
+        parseAddExpr();
+        while(getCurrentToken().type == TokenType::OPERATOR &&
+    (getCurrentToken().value == "<" || getCurrentToken().value == "<=" || getCurrentToken().value == ">" || getCurrentToken().value == ">=" || getCurrentToken().value == "=="|| getCurrentToken().value == "!="))
         {
             advance();
+            parseAddExpr();
+        }
+    }
 
-            if(!parseExpr())
-                return false;
+    void parseAddExpr() {
+        parseMulExpr();
+        while(getCurrentToken().type == TokenType::OPERATOR && (getCurrentToken().value == "+" || getCurrentToken().value == "-")) {
+            advance();
+            parseMulExpr();
+        }
+    }
 
-            if(!expect(TokenType::PUNCTUATOR, ")"))
-                return false;
-            
-            return true;
+    void parseMulExpr() {
+        parseUnaryExpr();
+        while(getCurrentToken().type == TokenType::OPERATOR &&
+    (getCurrentToken().value == "*" || getCurrentToken().value == "/" || getCurrentToken().value == "%"))
+    {
+        advance();
+        parseUnaryExpr();
+    }
+    }
+
+    void parseUnaryExpr() {
+        if (getCurrentToken().type == TokenType::OPERATOR && 
+            (getCurrentToken().value == "+" || getCurrentToken().value == "-" || getCurrentToken().value == "!")) {
+            advance();
+            parseUnaryExpr();
+        } else {
+            parsePrimaryExpr();
+        }
+    }
+
+    void parsePrimaryExpr() {
+        if (getCurrentToken().type == TokenType::IDENTIFIER) {
+            advance();
+            if (getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "(") {
+                advance();
+                if (!(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ")")) {
+                    parseExpr();
+                    while (getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ",") {
+                        advance();
+                        parseExpr();
+                    }
+                }
+                consume(TokenType::PUNCTUATOR, ")");
+            }
+        } else if (getCurrentToken().type == TokenType::INTEGER_LITERAL) {
+            advance();
+        } else if (getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == "(") {
+            advance();
+            parseExpr();
+            consume(TokenType::PUNCTUATOR, ")");
+        } else {
+            error();
+            if (getCurrentToken().type != TokenType::END_OF_FILE && 
+                !(getCurrentToken().type == TokenType::PUNCTUATOR && getCurrentToken().value == ";")) {
+                advance();
+            }
         }
     }
 
 public:
-    SyntaxAnalyzer(const vector<Token>& toks)
-        : tokens(toks)
-        , current(0)
-    {}
+    SyntaxAnalyzer(const vector<Token>&toks): tokens(toks), pos(0), loopDepth(0) {}
 
-    bool analyze() {
-        return parseCompUnit();
+    bool parse() {
+        parseCompUnit();
+        return errorLines.empty();
     }
 
-    bool hasErrors() const {
-        return !errorMessages.empty();
-    }
-
-    set<int> getErrorLine() const {
-        return errorLines;
-    }
-
-    vector<string> getErrorMessage() const {
-        return errorMessages;
-    }
+    set<int> getErrors() {return errorLines;}
 };
 
-int main() {
-    string line;
-    string input;
-    
-    // 读取所有输入
-    while (getline(cin, line)) {
+
+int main()
+{
+    string input, line;
+    while(getline(cin, line)) {
         input += line + "\n";
     }
 
-    // 词法分析
     LexicalAnalyzer lexer(input);
     vector<Token> tokens = lexer.tokenize();
 
-    // 语法分析
     SyntaxAnalyzer parser(tokens);
-    bool success = parser.analyze();
+    parser.parse();
+    set<int> Errors = parser.getErrors();
 
-    if (success && !parser.hasErrors()) {
-        cout << "accept" << endl;
+    if(Errors.empty()){
+        cout<<"accept" <<endl;
     } else {
-        cout << "reject" << endl;
-        
-        // 输出所有错误的行号
-        set<int> errorLines = parser.getErrorLine();
-
-        cout<<"Error Lines: ";
-        bool first = true;
-        for(int line : errorLines)
-        {
-            if(!first) cout <<", ";
-            cout << line;
-            first = false;
+        cout << "reject" <<endl;
+        for (const auto& e : Errors) {
+            cout << e << endl;
         }
-        cout << endl;
     }
     return 0;
 }

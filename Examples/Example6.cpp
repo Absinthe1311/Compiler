@@ -1,4 +1,3 @@
-
 #include<bits/stdc++.h>
 using namespace std;
 
@@ -9,14 +8,15 @@ enum class TokenType {
     INTEGER_LITERAL,
     OPERATOR,
     PUNCTUATOR,
-    UNKNOWN
+    UNKNOWN,
+    END_OF_FILE
 };
 
 // Struct to represent a token with its type and value
 struct Token {
     TokenType type;
     string value;
-    int line; // 行号信息
+    int line;
 
     Token(TokenType t, const string& v, int l = 0)
         : type(t)
@@ -30,10 +30,9 @@ class LexicalAnalyzer {
 private:
     string input;
     size_t position;
-    int currentLine; //当前的行号
+    int currentLine;
     unordered_map<string, TokenType> keywords;
 
-    // Function to initialize the keywords map
     void initKeywords()
     {
         keywords["int"] = TokenType::KEYWORD;
@@ -46,33 +45,26 @@ private:
         keywords["void"] = TokenType::KEYWORD;
     }
 
-    // Function to check if a character is whitespace
     bool isWhitespace(char c)
     {
-        return c == ' ' || c == '\t' || c == '\n'
-                || c == '\r';
+        return c == ' ' || c == '\t' || c == '\n' || c == '\r';
     }
 
-    // Function to check if a character is alphabetic
     bool isAlpha(char c)
     {
-        return (c >= 'a' && c <= 'z')
-                || (c >= 'A' && c <= 'Z');
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
     }
 
-    // Function to check if a character is digit
     bool isDigit(char c)
     {
         return c >= '0' && c <= '9';
     }
 
-    // Function to check if a character is alphanumeric
     bool isAlphaNumeric(char c)
     {
         return isAlpha(c) || isDigit(c);
     }
 
-    // Function to check if a character is a operator
     bool isOperator(char c)
     {
         return c == '+' || c == '-' || c == '*' || c == '/' || c == '%'
@@ -80,20 +72,17 @@ private:
                 || c == '&' || c == '|';
     }
 
-    // Function to check if a character is a punctuator
     bool isPunctuator(char c)
     {
         return c == '(' || c == ')' || c == '{' || c == '}'
                 || c == ';' || c == ',';
     }
     
-    // Function to check if a character is a underscore
     bool isUnderscore(char c)
     {
         return c == '_';
     }
 
-    // Function to skip LineComment
     void skipLineComment()
     {
         if(position +1 < input.length() && input[position] == '/' && input[position+1] == '/')
@@ -105,10 +94,8 @@ private:
             position++;
             currentLine++;
         }
-
     }
 
-    // Function to skip BlockComment
     void skipBlockComment()
     {
         if(position+1 < input.length() && input[position] == '/' && input[position+1] == '*')
@@ -120,14 +107,13 @@ private:
             if(input[position] == '*' && input[position+1] == '/')
             {
                 position += 2;
-                return ;
+                return;
             }
             position++;
         }
-        position = input.length(); // 当最后没有终结*/的时候，到了程序结尾
+        position = input.length();
     }
 
-    // Function to get the next word
     string getNextWord()
     {
         size_t start = position;
@@ -139,7 +125,6 @@ private:
         return input.substr(start, position - start);
     }
 
-    // Function to get the next number
     string getNextNumber()
     {
         size_t start = position;
@@ -150,7 +135,6 @@ private:
         return input.substr(start, position - start);
     }
 
-    // Function to get the next operator
     string getNextOperator()
     {
         size_t start = position;
@@ -159,8 +143,7 @@ private:
         {
             two = input.substr(start, 2);
             if(two == "==" || two == "!=" || two == "<="
-               || two == ">=" || two == "&&" || two == "||"
-              )
+               || two == ">=" || two == "&&" || two == "||")
             {
                 position += 2;
                 return two;
@@ -178,7 +161,6 @@ private:
     }
 
 public: 
-    // Constructor for LexicalAnalyzer
     LexicalAnalyzer(const string& source)
         : input(source)
         , position(0)
@@ -187,7 +169,6 @@ public:
         initKeywords();
     }
 
-    // Function to tokenize the input string
     vector<Token> tokenize()
     {
         vector<Token> tokens;
@@ -196,7 +177,6 @@ public:
         {
             char currentChar = input[position];
 
-            // Skip whitespace
             if(isWhitespace(currentChar))
             {
                 if(currentChar == '\n')
@@ -205,11 +185,10 @@ public:
                 continue;
             }
 
-            // Identify keywords or identifiers 还有下划线开头
             if(isAlpha(currentChar) || isUnderscore(currentChar))
             {
                 string word = getNextWord();
-                if(keywords.find(word) != keywords.end()) //identify keywords
+                if(keywords.find(word) != keywords.end())
                 {
                     tokens.emplace_back(TokenType::KEYWORD, word, currentLine);
                 }
@@ -218,12 +197,12 @@ public:
                     tokens.emplace_back(TokenType::IDENTIFIER, word, currentLine);
                 }
             }
-            else if(isDigit(currentChar)) // identify integer
+            else if(isDigit(currentChar))
             {
                 string number = getNextNumber();
                 tokens.emplace_back(TokenType::INTEGER_LITERAL, number, currentLine);
             }
-            else if(currentChar == '/') //遇到/的时候判断是注释还是运算符
+            else if(currentChar == '/')
             {
                 if(position+1 < input.length() && input[position+1] == '/')
                 {
@@ -238,7 +217,7 @@ public:
                 else
                 {
                     string op = getNextOperator();
-                    tokens.emplace_back(TokenType::OPERATOR,op, currentLine);
+                    tokens.emplace_back(TokenType::OPERATOR, op, currentLine);
                 }
             }
             else if(isOperator(currentChar))
@@ -251,400 +230,331 @@ public:
                 string punct = getNextPunctuator();
                 tokens.emplace_back(TokenType::PUNCTUATOR, punct, currentLine);
             }
-            else // unknown character
+            else
             {
                 tokens.emplace_back(TokenType::UNKNOWN, string(1, currentChar), currentLine);
                 position++;
             }
         }
 
+        tokens.emplace_back(TokenType::END_OF_FILE, "", currentLine);
         return tokens;
     }
 };
 
-// all functions below for print name
-string getKeyWordName(const Token& token)
-{
-    return string("'") + token.value + "'";
-}
-
-
-string getOperatorName(const Token& token)
-{
-    return string("'") + token.value + "'";
-}
-
-string getPunctuatorName(const Token& token)
-{
-    return string("'") + token.value + "'";
-}
-
-// Function to convert TokenType to string for printing 
-string getTokenTypeName(TokenType type, const Token& token)
-{
-    switch(type)
-    {
-        case TokenType::KEYWORD:
-            return getKeyWordName(token);
-        case TokenType::IDENTIFIER:
-            return "Ident";
-        case TokenType::INTEGER_LITERAL:
-            return "IntConst";
-        case TokenType::OPERATOR:
-            return getOperatorName(token);
-        case TokenType::PUNCTUATOR:
-            return getPunctuatorName(token);
-        case TokenType::UNKNOWN:
-            return "Unknown";
-        default:
-            return "UNDEFINED";
-    }
-}
-
-// Function to print all tokens
-void printTokens(const vector<Token>& tokens)
-{
-    int count = 0;
-    for(const auto& token : tokens)
-    {
-        cout << count++ <<":" << getTokenTypeName(token.type, token)
-        <<":"<<"\"" << token.value << "\"" <<token.line<< endl;
-    }
-}
+// Parser class
 class Parser {
-public:
+private:
     vector<Token> tokens;
-    int pos = 0;
-    vector<int> errors;
+    size_t pos;
+    set<int> errorLines;
+    int loopDepth;
+    bool hasError;
 
-    Parser(const vector<Token>& t) : tokens(t) {}
-
-    // ---------------- 工具函数 ----------------
-
-    bool isEnd() const {
-        return pos >= (int)tokens.size();
+    Token getCurrentToken() {
+        if (pos >= tokens.size()) return tokens.back();
+        return tokens[pos];
     }
 
-    const Token& peek(int offset = 0) const {
-        static Token dummy(TokenType::UNKNOWN, "", 0);
-        int index = pos + offset;
-        return (index < tokens.size() ? tokens[index] : dummy);
+
+    void advance() {
+        if (pos < tokens.size()) pos++;
     }
 
-    bool match(TokenType type, const string& val = "") {
-        if (isEnd()) return false;
-        if (tokens[pos].type != type) return false;
-        if (!val.empty() && tokens[pos].value != val) return false;
-        pos++;
+    void error() {
+        hasError = true;
+        int line = getCurrentToken().line;
+        errorLines.insert(line);
+    }
+
+    bool match(TokenType type, const string& value = "") {
+        if (getCurrentToken().type != type) return false;
+        if (!value.empty() && getCurrentToken().value != value) return false;
         return true;
     }
 
-    const Token& advance() {
-        if (!isEnd()) return tokens[pos++];
-        return peek(); // dummy
-    }
-
-    void error(const string& msg) {
-        if (!isEnd()) {
-            errors.push_back(peek().line);
-        } else if (!tokens.empty()) {
-            // 若在末尾报错，就使用最后一个 token 的行号
-            errors.push_back(tokens.back().line);
+    bool consume(TokenType type, const string& value) {
+        if (match(type, value)) {
+            advance();
+            return true;
         }
+        error();
+        return false;
     }
 
-    bool checkOp(const string& op) {
-        return !isEnd() && tokens[pos].type == TokenType::OPERATOR && tokens[pos].value == op;
+    bool consume(TokenType type) {
+        if (current().type == type) {
+            advance();
+            return true;
+        }
+        error();
+        return false;
     }
 
-    bool checkPunc(const string& p) {
-        return !isEnd() && tokens[pos].type == TokenType::PUNCTUATOR && tokens[pos].value == p;
+    void sync() {
+        while (current().type != TokenType::END_OF_FILE && 
+               !(current().type == TokenType::PUNCTUATOR && current().value == ";") &&
+               !(current().type == TokenType::PUNCTUATOR && current().value == "}")) {
+            advance();
+        }
+        if (current().type == TokenType::PUNCTUATOR && current().value == ";") 
+            advance();
     }
 
-    bool checkKW(const string& kw) {
-        return !isEnd() && tokens[pos].type == TokenType::KEYWORD && tokens[pos].value == kw;
-    }
-
-    bool checkID() {
-        return !isEnd() && tokens[pos].type == TokenType::IDENTIFIER;
-    }
-
-    bool checkNumber() {
-        return !isEnd() && tokens[pos].type == TokenType::INTEGER_LITERAL;
-    }
-
-    // ---------------- 入口 ----------------
     void parseCompUnit() {
-        while (!isEnd()) {
+        while (current().type != TokenType::END_OF_FILE) {
             parseFuncDef();
         }
     }
 
-    // ---------------- 函数定义 ----------------
     void parseFuncDef() {
-        // ("int" | "void")
-        if (!(checkKW("int") || checkKW("void"))) {
-            error("Expected type in function definition");
-            advance();
+        if (!match(TokenType::KEYWORD, "int") && !match(TokenType::KEYWORD, "void")) {
+            error();
+            sync();
+            if (current().type == TokenType::PUNCTUATOR && current().value == "}") 
+                advance();
             return;
         }
         advance();
 
-        // ID
-        if (!checkID()) {
-            error("Expected function name");
-            advance();
+        if (!consume(TokenType::IDENTIFIER)) {
+            sync();
+            if (current().type == TokenType::PUNCTUATOR && current().value == "}") 
+                advance();
             return;
         }
-        advance();
 
-        // "("
-        if (!match(TokenType::PUNCTUATOR, "(")) {
-            error("Expected '('");
-        }
+        consume(TokenType::PUNCTUATOR, "(");
 
-        // 参数表
-        if (!checkPunc(")")) {
+        if (match(TokenType::KEYWORD, "int")) {
             parseParam();
-            while (match(TokenType::PUNCTUATOR, ",")) {
+            while (current().type == TokenType::PUNCTUATOR && current().value == ",") {
+                advance();
                 parseParam();
             }
         }
 
-        // ")"
-        if (!match(TokenType::PUNCTUATOR, ")")) {
-            error("Expected ')'");
-        }
-
-        // Block
+        consume(TokenType::PUNCTUATOR, ")");
         parseBlock();
     }
 
     void parseParam() {
-        if (!checkKW("int")) {
-            error("Expected 'int' in parameter");
-            advance();
-            return;
-        }
-        advance();
-        if (!checkID()) {
-            error("Expected identifier in parameter");
-            advance();
-        } else {
-            advance();
-        }
+        consume(TokenType::KEYWORD, "int");
+        consume(TokenType::IDENTIFIER);
     }
 
-    // ---------------- 语句块 ----------------
     void parseBlock() {
-        if (!match(TokenType::PUNCTUATOR, "{")) {
-            error("Expected '{'");
+        if (!consume(TokenType::PUNCTUATOR, "{")) {
             return;
         }
 
-        while (!isEnd() && !checkPunc("}")) {
+        while (!(current().type == TokenType::PUNCTUATOR && current().value == "}") && 
+               current().type != TokenType::END_OF_FILE) {
             parseStmt();
         }
 
-        if (!match(TokenType::PUNCTUATOR, "}")) {
-            error("Expected '}'");
-        }
+        consume(TokenType::PUNCTUATOR, "}");
     }
 
-    // ---------------- 语句 ----------------
     void parseStmt() {
-        if (checkPunc("{")) {
-            parseBlock();
-            return;
-        }
-
-        if (checkPunc(";")) {
+        if (match(TokenType::KEYWORD, "int")) {
             advance();
-            return;
-        }
-
-        // int 声明
-        if (checkKW("int")) {
+            consume(TokenType::IDENTIFIER);
+            if (current().type == TokenType::OPERATOR && current().value == "=") {
+                advance();
+                parseExpr();
+            }
+            while (current().type == TokenType::PUNCTUATOR && current().value == ",") {
+                advance();
+                consume(TokenType::IDENTIFIER);
+                if (current().type == TokenType::OPERATOR && current().value == "=") {
+                    advance();
+                    parseExpr();
+                }
+            }
+            consume(TokenType::PUNCTUATOR, ";");
+        } else if (match(TokenType::KEYWORD, "if")) {
             advance();
-            if (!checkID()) error("Expected identifier after int");
-            else advance();
-
-            if (!match(TokenType::OPERATOR, "=")) error("Expected '='");
+            consume(TokenType::PUNCTUATOR, "(");
             parseExpr();
-
-            if (!match(TokenType::PUNCTUATOR, ";")) error("Expected ';'");
-            return;
-        }
-
-        // if
-        if (checkKW("if")) {
-            advance();
-            if (!match(TokenType::PUNCTUATOR, "(")) error("Expected '('");
-            parseExpr();
-            if (!match(TokenType::PUNCTUATOR, ")")) error("Expected ')'");
+            consume(TokenType::PUNCTUATOR, ")");
             parseStmt();
-            if (checkKW("else")) {
+            if (match(TokenType::KEYWORD, "else")) {
                 advance();
                 parseStmt();
             }
-            return;
-        }
-
-        // while
-        if (checkKW("while")) {
+        } else if (match(TokenType::KEYWORD, "while")) {
             advance();
-            if (!match(TokenType::PUNCTUATOR, "(")) error("Expected '('");
+            consume(TokenType::PUNCTUATOR, "(");
             parseExpr();
-            if (!match(TokenType::PUNCTUATOR, ")")) error("Expected ')'");
+            consume(TokenType::PUNCTUATOR, ")");
+            loopDepth++;
             parseStmt();
-            return;
-        }
-
-        // break;
-        if (checkKW("break")) {
+            loopDepth--;
+        } else if (match(TokenType::KEYWORD, "break")) {
             advance();
-            if (!match(TokenType::PUNCTUATOR, ";")) error("Expected ';'");
-            return;
-        }
-
-        // continue;
-        if (checkKW("continue")) {
+            consume(TokenType::PUNCTUATOR, ";");
+        } else if (match(TokenType::KEYWORD, "continue")) {
             advance();
-            if (!match(TokenType::PUNCTUATOR, ";")) error("Expected ';'");
-            return;
-        }
-
-        // return expr;
-        if (checkKW("return")) {
+            consume(TokenType::PUNCTUATOR, ";");
+        } else if (match(TokenType::KEYWORD, "return")) {
             advance();
-            parseExpr();
-            if (!match(TokenType::PUNCTUATOR, ";")) error("Expected ';'");
-            return;
-        }
-
-        // ID = Expr;
-        if (checkID()) {
-            advance();
-            if (match(TokenType::OPERATOR, "=")) {
+            if (!(current().type == TokenType::PUNCTUATOR && current().value == ";")) {
                 parseExpr();
-                if (!match(TokenType::PUNCTUATOR, ";")) error("Expected ';'");
-                return;
             }
-            else {
-                error("Expected '='");
-                return;
-            }
-        }
-
-        // Expr ;
-        parseExpr();
-        if (!match(TokenType::PUNCTUATOR, ";")) error("Expected ';'");
-    }
-
-    // ---------------- 表达式 ----------------
-    void parseExpr() {
-        parseLOr();
-    }
-
-    void parseLOr() {
-        parseLAnd();
-        while (checkOp("||")) {
+            consume(TokenType::PUNCTUATOR, ";");
+        } else if (current().type == TokenType::PUNCTUATOR && current().value == "{") {
+            parseBlock();
+        } else if (current().type == TokenType::IDENTIFIER) {
             advance();
-            parseLAnd();
-        }
-    }
 
-    void parseLAnd() {
-        parseRel();
-        while (checkOp("&&")) {
-            advance();
-            parseRel();
-        }
-    }
-
-    void parseRel() {
-        parseAdd();
-        while (checkOp("<") || checkOp(">") || checkOp("<=") || checkOp(">=") ||
-               checkOp("==") || checkOp("!=")) {
-            advance();
-            parseAdd();
-        }
-    }
-
-    void parseAdd() {
-        parseMul();
-        while (checkOp("+") || checkOp("-")) {
-            advance();
-            parseMul();
-        }
-    }
-
-    void parseMul() {
-        parseUnary();
-        while (checkOp("*") || checkOp("/") || checkOp("%")) {
-            advance();
-            parseUnary();
-        }
-    }
-
-    void parseUnary() {
-        if (checkOp("+") || checkOp("-") || checkOp("!")) {
-            advance();
-            parseUnary();
-        } else {
-            parsePrimary();
-        }
-    }
-
-    void parsePrimary() {
-        if (checkNumber()) {
-            advance();
-            return;
-        }
-        if (checkID()) {
-            advance();
-            // 函数调用
-            if (match(TokenType::PUNCTUATOR, "(")) {
-                if (!checkPunc(")")) {
+            if (current().type == TokenType::OPERATOR && current().value == "=") {
+                advance();
+                parseExpr();
+                consume(TokenType::PUNCTUATOR, ";");
+            } else if (current().type == TokenType::PUNCTUATOR && current().value == "(") {
+                advance();
+                
+                if (!(current().type == TokenType::PUNCTUATOR && current().value == ")")) {
                     parseExpr();
-                    while (match(TokenType::PUNCTUATOR, ",")) {
+                    while (current().type == TokenType::PUNCTUATOR && current().value == ",") {
+                        advance();
                         parseExpr();
                     }
                 }
-                if (!match(TokenType::PUNCTUATOR, ")")) error("Expected ')'");
+                consume(TokenType::PUNCTUATOR, ")");
+                consume(TokenType::PUNCTUATOR, ";");
+            } else {
+                consume(TokenType::PUNCTUATOR, ";");
             }
-            return;
+        } else if (current().type == TokenType::PUNCTUATOR && current().value == ";") {
+            advance();
+        } else {
+            error();
+            advance();
         }
-        if (match(TokenType::PUNCTUATOR, "(")) {
-            parseExpr();
-            if (!match(TokenType::PUNCTUATOR, ")"))
-                error("Expected ')'");
-            return;
-        }
-        error("Expected primary expression");
-        advance();
     }
+
+    void parseExpr() {
+        parseLOrExpr();
+    }
+
+    void parseLOrExpr() {
+        parseLAndExpr();
+        while (current().type == TokenType::OPERATOR && current().value == "||") {
+            advance();
+            parseLAndExpr();
+        }
+    }
+
+    void parseLAndExpr() {
+        parseRelExpr();
+        while (current().type == TokenType::OPERATOR && current().value == "&&") {
+            advance();
+            parseRelExpr();
+        }
+    }
+
+    void parseRelExpr() {
+        parseAddExpr();
+        while (current().type == TokenType::OPERATOR && 
+               (current().value == "<" || current().value == "<=" || 
+                current().value == ">" || current().value == ">=" || 
+                current().value == "==" || current().value == "!=")) {
+            advance();
+            parseAddExpr();
+        }
+    }
+
+    void parseAddExpr() {
+        parseMulExpr();
+        while (current().type == TokenType::OPERATOR && 
+               (current().value == "+" || current().value == "-")) {
+            advance();
+            parseMulExpr();
+        }
+    }
+
+    void parseMulExpr() {
+        parseUnaryExpr();
+        while (current().type == TokenType::OPERATOR && 
+               (current().value == "*" || current().value == "/" || current().value == "%")) {
+            advance();
+            parseUnaryExpr();
+        }
+    }
+
+    void parseUnaryExpr() {
+        if (current().type == TokenType::OPERATOR && 
+            (current().value == "+" || current().value == "-" || current().value == "!")) {
+            advance();
+            parseUnaryExpr();
+        } else {
+            parsePrimaryExpr();
+        }
+    }
+
+    void parsePrimaryExpr() {
+        if (current().type == TokenType::IDENTIFIER) {
+            advance();
+            if (current().type == TokenType::PUNCTUATOR && current().value == "(") {
+                advance();
+                if (!(current().type == TokenType::PUNCTUATOR && current().value == ")")) {
+                    parseExpr();
+                    while (current().type == TokenType::PUNCTUATOR && current().value == ",") {
+                        advance();
+                        parseExpr();
+                    }
+                }
+                consume(TokenType::PUNCTUATOR, ")", "Lack of ')'");
+            }
+        } else if (current().type == TokenType::INTEGER_LITERAL) {
+            advance();
+        } else if (current().type == TokenType::PUNCTUATOR && current().value == "(") {
+            advance();
+            parseExpr();
+            consume(TokenType::PUNCTUATOR, ")", "Lack of ')'");
+        } else {
+            error("Expected expression");
+            if (current().type != TokenType::END_OF_FILE && 
+                !(current().type == TokenType::PUNCTUATOR && current().value == ";")) {
+                advance();
+            }
+        }
+    }
+
+public:
+    Parser(const vector<Token>& toks) : tokens(toks), pos(0), loopDepth(0), hasError(false) {}
+
+    bool parse() {
+        parseCompUnit();
+        return !hasError;
+    }
+
+    map<int, string> getErrors() { return errors; }
 };
 
-
-int main()
-{
-    string line;
-    string input;
-
+int main() {
+    string input, line;
     while (getline(cin, line)) {
         input += line + "\n";
     }
 
     LexicalAnalyzer lexer(input);
     vector<Token> tokens = lexer.tokenize();
-    Parser parser(tokens);
-    parser.parseCompUnit();
 
-    if (parser.errors.empty()) {
-        cout << "accept\n";
+    Parser parser(tokens);
+    bool success = parser.parse();
+    auto parseErrors = parser.getErrors();
+
+    if (parseErrors.empty()) {
+        cout << "accept" << endl;
     } else {
-        for (int line : parser.errors) cout << line << "\n";
+        cout << "reject" << endl;
+        for (const auto& e : parseErrors) {
+            cout << e.first << " " << e.second << endl;
+        }
     }
 
+    return 0;
 }
