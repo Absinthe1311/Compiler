@@ -1,0 +1,5 @@
+/home/absinthe/Compiler/build/CMakeFiles/edit_cache.dir
+/home/absinthe/Compiler/build/CMakeFiles/rebuild_cache.dir
+/home/absinthe/Compiler/build/Experiment2/CMakeFiles/SyntaxAnalyzer.dir
+/home/absinthe/Compiler/build/Experiment2/CMakeFiles/edit_cache.dir
+/home/absinthe/Compiler/build/Experiment2/CMakeFiles/rebuild_cache.dir
