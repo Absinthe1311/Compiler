@@ -1,8 +1,8 @@
 file(REMOVE_RECURSE
+  "../bin/SyntaxAnalyzer"
+  "../bin/SyntaxAnalyzer.pdb"
   "CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o"
   "CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o.d"
-  "SyntaxAnalyzer"
-  "SyntaxAnalyzer.pdb"
 )
 
 # Per-language clean rules from dependency scanning.

@@ -26,7 +26,7 @@
 						"string" : "3.10"
 					},
 					"parentIndex" : 0,
-					"projectIndex" : 1,
+					"projectIndex" : 0,
 					"source" : "Experiment2",
 					"targetIndexes" : 
 					[
@@ -38,23 +38,12 @@
 			"projects" : 
 			[
 				{
-					"childIndexes" : 
-					[
-						1
-					],
 					"directoryIndexes" : 
 					[
-						0
-					],
-					"name" : "CompilerProject"
-				},
-				{
-					"directoryIndexes" : 
-					[
+						0,
 						1
 					],
 					"name" : "SyntaxAnalyzer",
-					"parentIndex" : 0,
 					"targetIndexes" : 
 					[
 						0
@@ -66,9 +55,9 @@
 				{
 					"directoryIndex" : 1,
 					"id" : "SyntaxAnalyzer::@224859d0e16298cbb3b8",
-					"jsonFile" : "target-SyntaxAnalyzer-Debug-2d34b16140953933d050.json",
+					"jsonFile" : "target-SyntaxAnalyzer-Debug-acdd4848e346db376a66.json",
 					"name" : "SyntaxAnalyzer",
-					"projectIndex" : 1
+					"projectIndex" : 0
 				}
 			]
 		}

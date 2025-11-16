@@ -140,7 +140,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=CompilerProject
+CMAKE_PROJECT_NAME:STATIC=SyntaxAnalyzer
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
@@ -214,13 +214,13 @@ CompilerProject_IS_TOP_LEVEL:STATIC=ON
 CompilerProject_SOURCE_DIR:STATIC=/home/absinthe/Compiler
 
 //Value Computed by CMake
-SyntaxAnalyzer_BINARY_DIR:STATIC=/home/absinthe/Compiler/build/Experiment2
+SyntaxAnalyzer_BINARY_DIR:STATIC=/home/absinthe/Compiler/build
 
 //Value Computed by CMake
-SyntaxAnalyzer_IS_TOP_LEVEL:STATIC=OFF
+SyntaxAnalyzer_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
-SyntaxAnalyzer_SOURCE_DIR:STATIC=/home/absinthe/Compiler/Experiment2
+SyntaxAnalyzer_SOURCE_DIR:STATIC=/home/absinthe/Compiler
 
 
 ########################
