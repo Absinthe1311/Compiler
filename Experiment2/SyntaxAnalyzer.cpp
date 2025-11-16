@@ -16,7 +16,7 @@ enum class TokenType {
 struct Token {
     TokenType type;
     string value;
-    int line; // 行号信息
+    int line;
 
     Token(TokenType t, const string& v, int l = 0)
         : type(t)
@@ -30,7 +30,7 @@ class LexicalAnalyzer {
 private:
     string input;
     size_t position;
-    int currentLine; //当前的行号
+    int currentLine;
     unordered_map<string, TokenType> keywords;
 
     // Function to initialize the keywords map
@@ -72,8 +72,8 @@ private:
         return isAlpha(c) || isDigit(c);
     }
 
-    // Function to check if a character is a OPERATOR
-    bool isOPERATOR(char c)
+    // Function to check if a character is a operator
+    bool isOperator(char c)
     {
         return c == '+' || c == '-' || c == '*' || c == '/' || c == '%'
                 || c == '=' || c == '<' || c == '>' || c == '!'
@@ -101,11 +101,8 @@ private:
         while(position < input.length() && input[position] != '\n')
             position++;
         if(position < input.length() && input[position] == '\n')
-        {
-            position++;
-            currentLine++;
-        }
-
+        {    position++;
+            currentLine++;}
     }
 
     // Function to skip BlockComment
@@ -150,8 +147,8 @@ private:
         return input.substr(start, position - start);
     }
 
-    // Function to get the next OPERATOR
-    string getNextOPERATOR()
+    // Function to get the next operator
+    string getNextOperator()
     {
         size_t start = position;
         string two;
@@ -181,8 +178,8 @@ public:
     // Constructor for LexicalAnalyzer
     LexicalAnalyzer(const string& source)
         : input(source)
-        , position(0)
-        , currentLine(1)
+        , position(0),
+        currentLine(1)
     {
         initKeywords();
     }
@@ -199,8 +196,6 @@ public:
             // Skip whitespace
             if(isWhitespace(currentChar))
             {
-                if(currentChar == '\n')
-                    currentLine++;
                 position++;
                 continue;
             }
@@ -237,13 +232,13 @@ public:
                 }
                 else
                 {
-                    string op = getNextOPERATOR();
+                    string op = getNextOperator();
                     tokens.emplace_back(TokenType::OPERATOR,op, currentLine);
                 }
             }
-            else if(isOPERATOR(currentChar))
+            else if(isOperator(currentChar))
             {
-                string op = getNextOPERATOR(); 
+                string op = getNextOperator(); 
                 tokens.emplace_back(TokenType::OPERATOR, op, currentLine);
             }
             else if(isPunctuator(currentChar))
@@ -270,7 +265,7 @@ string getKeyWordName(const Token& token)
 }
 
 
-string getOPERATORName(const Token& token)
+string getOperatorName(const Token& token)
 {
     return string("'") + token.value + "'";
 }
@@ -292,7 +287,7 @@ string getTokenTypeName(TokenType type, const Token& token)
         case TokenType::INTEGER_LITERAL:
             return "IntConst";
         case TokenType::OPERATOR:
-            return getOPERATORName(token);
+            return getOperatorName(token);
         case TokenType::PUNCTUATOR:
             return getPunctuatorName(token);
         case TokenType::UNKNOWN:
@@ -312,10 +307,6 @@ void printTokens(const vector<Token>& tokens)
         <<":"<<"\"" << token.value << "\"" << endl;
     }
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
 
 class SyntaxAnalyzer{
 private:
@@ -630,7 +621,7 @@ int main()
     vector<Token> tokens = lexer.tokenize();
 
     SyntaxAnalyzer parser(tokens);
-    parser.parse();
+    // parser.parse();
     set<int> Errors = parser.getErrors();
 
     if(Errors.empty()){
