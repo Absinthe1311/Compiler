@@ -1,7 +1,0 @@
-[
-{
-  "directory": "/home/absinthe/Compiler/build/Experiment2",
-  "command": "/usr/bin/clang++   -g -o CMakeFiles/SyntaxAnalyzer.dir/SyntaxAnalyzer.cpp.o -c /home/absinthe/Compiler/Experiment2/SyntaxAnalyzer.cpp",
-  "file": "/home/absinthe/Compiler/Experiment2/SyntaxAnalyzer.cpp"
-}
-]
