@@ -312,6 +312,9 @@ void printTokens(const vector<Token>& tokens)
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//语法分析器部分//
+
 class SyntaxAnalyzer{
 private:
     vector<Token> tokens; 
@@ -517,52 +520,59 @@ private:
         parseLOrExpr();
     }
 
-    void parseLOrExpr() {
+    void parseLOrExpr() 
+    {
         parseLAndExpr();
-        while(match(TokenType::OPERATOR, "||")){
+        while(match(TokenType::OPERATOR, "||"))
+        {
             advance();
             parseLAndExpr();
         }
     }
 
-    void parseLAndExpr() {
+    void parseLAndExpr() 
+    {
         parseRelExpr();
-        while( getCurrentToken().type == TokenType::OPERATOR && getCurrentToken().value == "&&") 
+        while(match(TokenType::OPERATOR, "&&")) 
         {
+
             advance();
             parseRelExpr();
         }
     }
 
-    void parseRelExpr() {
+    void parseRelExpr() 
+    {
         parseAddExpr();
-        while(getCurrentToken().type == TokenType::OPERATOR &&
-    (getCurrentToken().value == "<" || getCurrentToken().value == "<=" || getCurrentToken().value == ">" || getCurrentToken().value == ">=" || getCurrentToken().value == "=="|| getCurrentToken().value == "!="))
+        while(match(TokenType::OPERATOR, "<") || match(TokenType::OPERATOR, "<=") || match(TokenType::OPERATOR,"<=") || match(TokenType::OPERATOR, ">") || match(TokenType::OPERATOR, ">=") || match(TokenType::OPERATOR, "!=") || match(TokenType::OPERATOR, "=="))
         {
             advance();
             parseAddExpr();
         }
     }
 
-    void parseAddExpr() {
+    void parseAddExpr() 
+    {
         parseMulExpr();
-        while(getCurrentToken().type == TokenType::OPERATOR && (getCurrentToken().value == "+" || getCurrentToken().value == "-")) {
+        while(match(TokenType::OPERATOR,"-") || match(TokenType::OPERATOR, "+")) 
+        {
             advance();
             parseMulExpr();
         }
     }
 
-    void parseMulExpr() {
-        parseUnaryExpr();
-        while(getCurrentToken().type == TokenType::OPERATOR &&
-    (getCurrentToken().value == "*" || getCurrentToken().value == "/" || getCurrentToken().value == "%"))
+    void parseMulExpr() 
     {
-        advance();
         parseUnaryExpr();
-    }
+        while(match(TokenType::OPERATOR,"*") || match(TokenType::OPERATOR,"/") || match(TokenType::OPERATOR, "%"))
+        {
+            advance();
+            parseUnaryExpr();
+        }
     }
 
-    void parseUnaryExpr() {
+    void parseUnaryExpr() 
+    {
         if(match(TokenType::OPERATOR, "+") || match(TokenType::OPERATOR, "-") || match(TokenType::OPERATOR, "!"))
         {
             advance();
@@ -572,7 +582,8 @@ private:
         }
     }
 
-    void parsePrimaryExpr() {
+    void parsePrimaryExpr() 
+    {
         if(match(TokenType::IDENTIFIER))
         {
             advance();
